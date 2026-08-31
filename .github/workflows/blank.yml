@@ -24,13 +24,13 @@ jobs:
           sudo systemctl enable --now tailscaled
       - name: Connect Tailscale
         env:
-          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
+          TS_AUTHKEY: ${{ tskey-auth-kBR5s33Qj721CNTRL-SvxuCeAzMK5wYFqgA2sZK54RgtH6HZcN.TS_AUTHKEY }}
         run: |
           sudo tailscale up --auth-key="$TS_AUTHKEY" --ssh
           tailscale ip -4
       - name: Prepare gamer
         env:
-          RDP_PASSWORD: ${{ secrets.RDP_PASSWORD }}
+          RDP_PASSWORD: ${{ 12345678.RDP_PASSWORD }}
         run: |
           sudo useradd -m -s /bin/bash gamer || true
           echo "gamer:$RDP_PASSWORD" | sudo chpasswd
