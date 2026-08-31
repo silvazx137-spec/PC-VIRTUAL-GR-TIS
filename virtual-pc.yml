@@ -1,0 +1,48 @@
+name: Virtual PC
+on:
+  workflow_dispatch:
+jobs:
+  pc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Update
+        run: sudo apt update
+      - name: Desktop RDP
+        run: |
+          sudo apt install -y xfce4 xfce4-goodies xrdp
+          echo "startxfce4" | sudo tee /etc/xrdp/startwm.sh
+          sudo chmod +x /etc/xrdp/startwm.sh
+          sudo systemctl restart xrdp
+      - name: Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+      - name: Configure user
+        env:
+          PASS: ${{ secrets.RDP_PASSWORD }}
+        run: |
+          sudo useradd -m -s /bin/bash gamer || true
+          echo "gamer:$PASS" | sudo chpasswd
+          sudo usermod -aG sudo gamer
+          sudo systemctl restart xrdp
+      - name: Check hardware
+        run: |
+          echo "=== CPU ==="
+          lscpu | grep "Model name" | head -1
+          echo "=== RAM ==="
+          free -h
+          echo "=== GPU ==="
+          lspci | grep -Ei "vga|3d|display" || true
+          command -v nvidia-smi && nvidia-smi || echo "GPU NVIDIA nao disponivel"
+      - name: Show Tailscale IP
+        run: tailscale ip -4
+      - name: Keep running
+        run: |
+          echo "PC virtual iniciado"
+          echo "Usuario RDP: gamer"
+          echo "Use o IP Tailscale acima"
+          echo "A sessao termina quando o workflow terminar"
+          sleep 21000
