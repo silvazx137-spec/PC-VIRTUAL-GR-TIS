@@ -30,7 +30,7 @@ jobs:
           tailscale ip -4
       - name: Prepare gamer
         env:
-          RDP_PASSWORD: ${{ 12345678.RDP_PASSWORD }}
+          RDP_PASSWORD: ${{ Gabriel15G .RDP_PASSWORD }}
         run: |
           sudo useradd -m -s /bin/bash gamer || true
           echo "gamer:$RDP_PASSWORD" | sudo chpasswd
