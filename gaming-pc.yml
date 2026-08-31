@@ -1,0 +1,77 @@
+name: Virtual PC
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update system
+        run: |
+          sudo apt-get update
+          sudo apt-get upgrade -y
+
+      - name: Install Desktop and RDP
+        run: |
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xfce4 xfce4-goodies xrdp dbus-x11
+          sudo systemctl enable xrdp
+          sudo systemctl restart xrdp
+
+      - name: Install Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          authkey: ${{ tskey-auth-kBR5s33Qj721CNTRL-SvxuCeAzMK5wYFqgA2sZK54RgtH6HZcN.TAILSCALE_AUTHKEY }}
+
+      - name: Configure gamer
+        env:
+          RDP_PASSWORD: ${{ 12345678.RDP_PASSWORD }}
+        run: |
+          if [ -z "$RDP_PASSWORD" ]; then
+            echo "ERRO: o secret RDP_PASSWORD nao foi configurado."
+            exit 1
+          fi
+
+          sudo useradd -m -s /bin/bash gamer || true
+          echo "gamer:$RDP_PASSWORD" | sudo chpasswd
+          sudo usermod -aG sudo gamer
+
+          echo "startxfce4" | sudo tee /home/gamer/.xsession
+          sudo chown gamer:gamer /home/gamer/.xsession
+          sudo chmod 644 /home/gamer/.xsession
+
+          sudo systemctl restart xrdp
+
+      - name: Check hardware
+        run: |
+          echo "=== CPU ==="
+          lscpu | grep "Model name" | head -1
+
+          echo "=== RAM ==="
+          free -h
+
+          echo "=== GPU ==="
+          lspci | grep -Ei "vga|3d|display" || true
+
+          echo "=== XRDP ==="
+          sudo systemctl status xrdp --no-pager || true
+
+      - name: Show Tailscale IP
+        run: |
+          echo "=== TAILSCALE IP ==="
+          tailscale ip -4
+
+      - name: Keep running
+        run: |
+          echo "================================"
+          echo "PC VIRTUAL INICIADO"
+          echo "Usuario RDP: gamer"
+          echo "Porta RDP: 3389"
+          echo "================================"
+          sleep 21000
